@@ -1,0 +1,25 @@
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - docker build -t kushal/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true kushal/react-test npm test
+
+after_success:
+  - docker build -t kushal/multi-client ./client
+  - docker build -t kushal/multi-nginx ./nginx
+  - docker build -t kushal/multi-server ./server
+  - docker build -t kushal/multi-worker ./worker
+
+  # Login to docker
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  # Push repos to docker hub
+  - docker push kushal/multi-client
+  - docker push kushal/multi-nginx
+  - docker push kushal/multi-server
+  - docker push kushal/multi-worker
